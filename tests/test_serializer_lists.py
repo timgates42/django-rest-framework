@@ -1,7 +1,11 @@
+import sys
+
+import pytest
 from django.http import QueryDict
 from django.utils.datastructures import MultiValueDict
 
 from rest_framework import serializers
+from rest_framework.exceptions import ErrorDetail
 
 
 class BasicObject:
@@ -52,6 +56,13 @@ class TestListSerializer:
         serializer = self.Serializer(data=input_data)
         assert serializer.is_valid()
         assert serializer.validated_data == expected_output
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 7),
+        reason="subscriptable classes requires Python 3.7 or higher",
+    )
+    def test_list_serializer_is_subscriptable(self):
+        assert serializers.ListSerializer is serializers.ListSerializer["foo"]
 
 
 class TestListSerializerContainingNestedSerializer:
@@ -221,6 +232,49 @@ class TestNestedListSerializer:
         serializer = self.Serializer(data=input_data)
         assert serializer.is_valid()
         assert serializer.validated_data == expected_output
+
+
+class TestNestedListSerializerAllowEmpty:
+    """Tests the behaviour of allow_empty=False when a ListSerializer is used as a field."""
+
+    @pytest.mark.parametrize('partial', (False, True))
+    def test_allow_empty_true(self, partial):
+        """
+        If allow_empty is True, empty lists should be allowed regardless of the value
+        of partial on the parent serializer.
+        """
+        class ChildSerializer(serializers.Serializer):
+            id = serializers.IntegerField()
+
+        class ParentSerializer(serializers.Serializer):
+            ids = ChildSerializer(many=True, allow_empty=True)
+
+        serializer = ParentSerializer(data={'ids': []}, partial=partial)
+        assert serializer.is_valid()
+        assert serializer.validated_data == {
+            'ids': [],
+        }
+
+    @pytest.mark.parametrize('partial', (False, True))
+    def test_allow_empty_false(self, partial):
+        """
+        If allow_empty is False, empty lists should fail validation regardless of the value
+        of partial on the parent serializer.
+        """
+        class ChildSerializer(serializers.Serializer):
+            id = serializers.IntegerField()
+
+        class ParentSerializer(serializers.Serializer):
+            ids = ChildSerializer(many=True, allow_empty=False)
+
+        serializer = ParentSerializer(data={'ids': []}, partial=partial)
+        assert not serializer.is_valid()
+        assert serializer.errors == {
+            'ids': {
+                'non_field_errors': [
+                    ErrorDetail(string='This list may not be empty.', code='empty')],
+            }
+        }
 
 
 class TestNestedListOfListsSerializer:

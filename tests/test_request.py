@@ -1,13 +1,10 @@
 """
 Tests for content parsing, and form-overloaded content parsing.
 """
-from __future__ import unicode_literals
-
 import os.path
 import tempfile
 
 import pytest
-from django.conf.urls import url
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import User
@@ -15,7 +12,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http.request import RawPostDataException
 from django.test import TestCase, override_settings
-from django.utils import six
+from django.urls import path
 
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -82,7 +79,7 @@ class TestContentParsing(TestCase):
         Ensure request.data returns content for POST request with
         non-form content.
         """
-        content = six.b('qwerty')
+        content = b'qwerty'
         content_type = 'text/plain'
         request = Request(factory.post('/', content, content_type=content_type))
         request.parsers = (PlainTextParser(),)
@@ -121,7 +118,7 @@ class TestContentParsing(TestCase):
         Ensure request.data returns content for PUT request with
         non-form content.
         """
-        content = six.b('qwerty')
+        content = b'qwerty'
         content_type = 'text/plain'
         request = Request(factory.put('/', content, content_type=content_type))
         request.parsers = (PlainTextParser(), )
@@ -140,7 +137,9 @@ class MockView(APIView):
 
 class EchoView(APIView):
     def post(self, request):
-        return Response(status=status.HTTP_200_OK, data=request.data)
+        response = Response(status=status.HTTP_200_OK, data=request.data)
+        response._request = request  # test client sets `request` input
+        return response
 
 
 class FileUploadView(APIView):
@@ -154,9 +153,9 @@ class FileUploadView(APIView):
 
 
 urlpatterns = [
-    url(r'^$', MockView.as_view()),
-    url(r'^echo/$', EchoView.as_view()),
-    url(r'^upload/$', FileUploadView.as_view())
+    path('', MockView.as_view()),
+    path('echo/', EchoView.as_view()),
+    path('upload/', FileUploadView.as_view())
 ]
 
 
@@ -235,7 +234,7 @@ class TestUserSetter(TestCase):
         This proves that when an AttributeError is raised inside of the request.user
         property, that we can handle this and report the true, underlying error.
         """
-        class AuthRaisesAttributeError(object):
+        class AuthRaisesAttributeError:
             def authenticate(self, request):
                 self.MISSPELLED_NAME_THAT_DOESNT_EXIST
 
@@ -248,10 +247,6 @@ class TestUserSetter(TestCase):
         expected = r"no attribute 'MISSPELLED_NAME_THAT_DOESNT_EXIST'"
         with pytest.raises(WrappedAttributeError, match=expected):
             request.user
-
-        # python 2 hasattr fails for *any* exception, not just AttributeError
-        if six.PY2:
-            return
 
         with pytest.raises(WrappedAttributeError, match=expected):
             hasattr(request, 'user')
@@ -279,6 +274,12 @@ class TestSecure(TestCase):
 
 
 class TestHttpRequest(TestCase):
+    def test_repr(self):
+        http_request = factory.get('/path')
+        request = Request(http_request)
+
+        assert repr(request) == "<rest_framework.request.Request: GET '/path'>"
+
     def test_attribute_access_proxy(self):
         http_request = factory.get('/')
         request = Request(http_request)
@@ -307,7 +308,7 @@ class TestHttpRequest(TestCase):
         `RawPostDataException` being raised.
         """
         response = APIClient().post('/echo/', data={'a': 'b'}, format='json')
-        request = response.renderer_context['request']
+        request = response._request
 
         # ensure that request stream was consumed by json parser
         assert request.content_type.startswith('application/json')
@@ -326,7 +327,7 @@ class TestHttpRequest(TestCase):
         the duplicate stream parse exception.
         """
         response = APIClient().post('/echo/', data={'a': 'b'})
-        request = response.renderer_context['request']
+        request = response._request
 
         # ensure that request stream was consumed by form parser
         assert request.content_type.startswith('multipart/form-data')
@@ -334,7 +335,7 @@ class TestHttpRequest(TestCase):
 
         # pass same HttpRequest to view, form data set on underlying request
         response = EchoView.as_view()(request._request)
-        request = response.renderer_context['request']
+        request = response._request
 
         # ensure that request stream was consumed by form parser
         assert request.content_type.startswith('multipart/form-data')

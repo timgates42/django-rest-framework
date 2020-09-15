@@ -1,9 +1,5 @@
 # Release Notes
 
-> Release Early, Release Often
->
-> &mdash; Eric S. Raymond, [The Cathedral and the Bazaar][cite].
-
 ## Versioning
 
 Minor version numbers (0.0.x) are used for changes that are API compatible.  You should be able to upgrade between minor point releases without any other code changes.
@@ -38,11 +34,96 @@ You can determine your currently installed version using `pip show`:
 
 ---
 
+## 3.11.x series
+
+### 3.11.0
+
+**Date**: 12th December 2019
+
+* Drop `.set_context` API [in favour of a `requires_context` marker](../3.11-announcement#validator-default-context).
+* Changed default widget for TextField with choices to select box. [#6892][gh6892]
+* Supported nested writes on non-relational fields, such as JSONField. [#6916][gh6916]
+* Include request/response media types in OpenAPI schemas, based on configured parsers/renderers. [#6865][gh6865]
+* Include operation descriptions in OpenAPI schemas, based on the docstring on the view. [#6898][gh6898]
+* Fix representation of serializers with all optional fields in OpenAPI schemas. [#6941][gh6941], [#6944][gh6944]
+* Fix representation of `serializers.HStoreField` in OpenAPI schemas. [#6914][gh6914]
+* Fix OpenAPI generation when title or version is not provided. [#6912][gh6912]
+* Use `int64` representation for large integers in OpenAPI schemas. [#7018][gh7018]
+* Improved error messages if no `.to_representation` implementation is provided on a field subclass. [#6996][gh6996]
+* Fix for serializer classes that use multiple inheritance. [#6980][gh6980]
+* Fix for reversing Hyperlinked URL fields with percent encoded components in the path. [#7059][gh7059]
+* Update bootstrap to 3.4.1. [#6923][gh6923]
+
+## 3.10.x series
+
+### 3.10.3
+
+**Date**: 4th September 2019
+
+* Include API version in OpenAPI schema generation, defaulting to empty string.
+* Add pagination properties to OpenAPI response schemas.
+* Add missing "description" property to OpenAPI response schemas.
+* Only include "required" for non-empty cases in OpenAPI schemas.
+* Fix response schemas for "DELETE" case in OpenAPI schemas.
+* Use an array type for list view response schemas.
+* Use consistent `lowerInitialCamelCase` style in OpenAPI operation IDs.
+* Fix `minLength`/`maxLength`/`minItems`/`maxItems` properties in OpenAPI schemas.
+* Only call `FileField.url` once in serialization, for improved performance.
+* Fix an edge case where throttling calculations could error after a configuration change.
+
+### 3.10.2
+
+**Date**: 29th July 2019
+
+* Various `OpenAPI` schema fixes.
+* Ability to specify urlconf in include_docs_urls.
+
+### 3.10.1
+
+**Date**: 17th July 2019
+
+* Don't include autocomplete fields on TokenAuth admin, since it forces constraints on custom user models & admin.
+* Require `uritemplate` for OpenAPI schema generation, but not `coreapi`.
+
+### 3.10.0
+
+**Date**: [15th July 2019][3.10.0-milestone]
+
+* Switch to OpenAPI schema generation.
+* Drop Python 2 support.
+* Add `generateschema --generator_class` CLI option
+* Updated PyYaml dependency for OpenAPI schema generation to `pyyaml>=5.1` [#6680][gh6680]
+* Resolve DeprecationWarning with markdown. [#6317][gh6317]
+* Use `user.get_username` in templates, in preference to `user.username`.
+* Fix for cursor pagination issue that could occur after object deletions.
+* Fix for nullable fields with `source="*"`
+* Always apply all throttle classes during throttling checks.
+* Updates to jQuery and Markdown dependencies.
+* Don't strict disallow redundant `SerializerMethodField` field name arguments.
+* Don't render extra actions in browable API if not authenticated.
+* Strip null characters from search parameters.
+
 ## 3.9.x series
+
+### 3.9.4
+
+**Date**: 10th May 2019
+
+This is a maintenance release that fixes an error handling bug under Python 2.
+
+### 3.9.3
+
+**Date**: 29th April 2019
+
+This is the last Django REST Framework release that will support Python 2.
+Be sure to upgrade to Python 3 before upgrading to Django REST Framework 3.10.
+
+* Adjusted the compat check for django-guardian to allow the last guardian
+  version (v1.4.9) compatible with Python 2. [#6613][gh6613]
 
 ### 3.9.2
 
-**Date**: [3rd March 2019][3.9.1-milestone]
+**Date**: [3rd March 2019][3.9.2-milestone]
 
 * Routers: invalidate `_urls` cache on `register()` [#6407][gh6407]
 * Deferred schema renderer creation to avoid requiring pyyaml. [#6416][gh6416]
@@ -93,7 +174,7 @@ You can determine your currently installed version using `pip show`:
 * Add testing of Python 3.7 support [#6141][gh6141]
 * Test using Django 2.1 final release. [#6109][gh6109]
 * Added djangorestframework-datatables to third-party packages [#5931][gh5931]
-* Change ISO 8601 date format to exclude year/month [#5936][gh5936]
+* Change ISO 8601 date format to exclude year/month-only options [#5936][gh5936]
 * Update all pypi.python.org URLs to pypi.org [#5942][gh5942]
 * Ensure that html forms (multipart form data) respect optional fields [#5927][gh5927]
 * Allow hashing of ErrorDetail. [#5932][gh5932]
@@ -106,7 +187,7 @@ You can determine your currently installed version using `pip show`:
 * Fixed Javascript `e.indexOf` is not a function error [#5982][gh5982]
 * Fix schemas for extra actions [#5992][gh5992]
 * Improved get_error_detail to use error_dict/error_list [#5785][gh5785]
-* Imprvied URLs in Admin renderer [#5988][gh5988]
+* Improved URLs in Admin renderer [#5988][gh5988]
 * Add "Community" section to docs, minor cleanup [#5993][gh5993]
 * Moved guardian imports out of compat [#6054][gh6054]
 * Deprecate the `DjangoObjectPermissionsFilter` class, moved to the `djangorestframework-guardian` package. [#6075][gh6075]
@@ -157,11 +238,11 @@ You can determine your currently installed version using `pip show`:
         def perform_create(self, serializer):
             serializer.save(owner=self.request.user)
 
-    Alternatively you may override `save()` or `create()` or `update()` on the serialiser as appropriate.
+    Alternatively you may override `save()` or `create()` or `update()` on the serializer as appropriate.
 
 * Correct allow_null behaviour when required=False [#5888][gh5888]
 
-    Without an explicit `default`, `allow_null` implies a default of `null` for outgoing serialisation. Previously such
+    Without an explicit `default`, `allow_null` implies a default of `null` for outgoing serialization. Previously such
     fields were being skipped when read-only or otherwise not required.
 
     **Possible backwards compatibility break** if you were relying on such fields being excluded from the outgoing
@@ -294,7 +375,7 @@ You can determine your currently installed version using `pip show`:
     Note: `AutoSchema.__init__` now ensures `manual_fields` is a list.
     Previously may have been stored internally as `None`.
 
-* Remove ulrparse compatability shim; use six instead [#5579][gh5579]
+* Remove ulrparse compatibility shim; use six instead [#5579][gh5579]
 * Drop compat wrapper for `TimeDelta.total_seconds()` [#5577][gh5577]
 * Clean up all whitespace throughout project [#5578][gh5578]
 * Compat cleanup [#5581][gh5581]
@@ -399,7 +480,7 @@ You can determine your currently installed version using `pip show`:
 * Deprecated `exclude_from_schema` on `APIView` and `api_view` decorator. Set `schema = None` or `@schema(None)` as appropriate. [#5422][gh5422]
 * Timezone-aware `DateTimeField`s now respect active or default `timezone` during serialization, instead of always using UTC. [#5435][gh5435]
 
-    Resolves inconsistency whereby instances were serialised with supplied datetime for `create` but UTC for `retrieve`. [#3732][gh3732]
+    Resolves inconsistency whereby instances were serialized with supplied datetime for `create` but UTC for `retrieve`. [#3732][gh3732]
 
     **Possible backwards compatibility break** if you were relying on datetime strings being UTC. Have client interpret datetimes or [set default or active timezone (docs)][djangodocs-set-timezone] to UTC if needed.
 
@@ -1165,7 +1246,8 @@ For older release notes, [please see the version 2.x documentation][old-release-
 [3.8.2-milestone]: https://github.com/encode/django-rest-framework/milestone/68?closed=1
 [3.9.0-milestone]: https://github.com/encode/django-rest-framework/milestone/66?closed=1
 [3.9.1-milestone]: https://github.com/encode/django-rest-framework/milestone/70?closed=1
-[3.9.1-milestone]: https://github.com/encode/django-rest-framework/milestone/71?closed=1
+[3.9.2-milestone]: https://github.com/encode/django-rest-framework/milestone/71?closed=1
+[3.10.0-milestone]: https://github.com/encode/django-rest-framework/milestone/69?closed=1
 
 <!-- 3.0.1 -->
 [gh2013]: https://github.com/encode/django-rest-framework/issues/2013
@@ -2106,3 +2188,25 @@ For older release notes, [please see the version 2.x documentation][old-release-
 [gh6340]: https://github.com/encode/django-rest-framework/issues/6340
 [gh6416]: https://github.com/encode/django-rest-framework/issues/6416
 [gh6407]: https://github.com/encode/django-rest-framework/issues/6407
+
+<!-- 3.9.3 -->
+[gh6613]: https://github.com/encode/django-rest-framework/issues/6613
+
+<!-- 3.10.0 -->
+[gh6680]: https://github.com/encode/django-rest-framework/issues/6680
+[gh6317]: https://github.com/encode/django-rest-framework/issues/6317
+
+<!-- 3.11.0 -->
+[gh6892]: https://github.com/encode/django-rest-framework/issues/6892
+[gh6916]: https://github.com/encode/django-rest-framework/issues/6916
+[gh6865]: https://github.com/encode/django-rest-framework/issues/6865
+[gh6898]: https://github.com/encode/django-rest-framework/issues/6898
+[gh6941]: https://github.com/encode/django-rest-framework/issues/6941
+[gh6944]: https://github.com/encode/django-rest-framework/issues/6944
+[gh6914]: https://github.com/encode/django-rest-framework/issues/6914
+[gh6912]: https://github.com/encode/django-rest-framework/issues/6912
+[gh7018]: https://github.com/encode/django-rest-framework/issues/7018
+[gh6996]: https://github.com/encode/django-rest-framework/issues/6996
+[gh6980]: https://github.com/encode/django-rest-framework/issues/6980
+[gh7059]: https://github.com/encode/django-rest-framework/issues/7059
+[gh6923]: https://github.com/encode/django-rest-framework/issues/6923

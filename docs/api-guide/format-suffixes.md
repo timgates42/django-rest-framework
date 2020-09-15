@@ -1,4 +1,7 @@
-source: urlpatterns.py
+---
+source:
+    - urlpatterns.py
+---
 
 # Format suffixes
 
@@ -29,16 +32,16 @@ Example:
     from blog import views
 
     urlpatterns = [
-        url(r'^/$', views.apt_root),
-        url(r'^comments/$', views.comment_list),
-        url(r'^comments/(?P<pk>[0-9]+)/$', views.comment_detail)
+        path('', views.apt_root),
+        path('comments/', views.comment_list),
+        path('comments/<int:pk>/', views.comment_detail)
     ]
 
     urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html'])
 
 When using `format_suffix_patterns`, you must make sure to add the `'format'` keyword argument to the corresponding views.  For example:
 
-    @api_view(('GET', 'POST'))
+    @api_view(['GET', 'POST'])
     def comment_list(request, format=None):
         # do stuff...
 

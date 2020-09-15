@@ -2,108 +2,8 @@
 The `compat` module provides support for backwards compatibility with older
 versions of Django/Python, and compatibility wrappers around optional packages.
 """
-
-from __future__ import unicode_literals
-
-import sys
-
 from django.conf import settings
-from django.core import validators
-from django.utils import six
 from django.views.generic import View
-
-try:
-    # Python 3
-    from collections.abc import Mapping, MutableMapping   # noqa
-except ImportError:
-    # Python 2.7
-    from collections import Mapping, MutableMapping   # noqa
-
-try:
-    from django.urls import (  # noqa
-        URLPattern,
-        URLResolver,
-    )
-except ImportError:
-    # Will be removed in Django 2.0
-    from django.urls import (  # noqa
-        RegexURLPattern as URLPattern,
-        RegexURLResolver as URLResolver,
-    )
-
-try:
-    from django.core.validators import ProhibitNullCharactersValidator  # noqa
-except ImportError:
-    ProhibitNullCharactersValidator = None
-
-try:
-    from unittest import mock
-except ImportError:
-    mock = None
-
-
-def get_original_route(urlpattern):
-    """
-    Get the original route/regex that was typed in by the user into the path(), re_path() or url() directive. This
-    is in contrast with get_regex_pattern below, which for RoutePattern returns the raw regex generated from the path().
-    """
-    if hasattr(urlpattern, 'pattern'):
-        # Django 2.0
-        return str(urlpattern.pattern)
-    else:
-        # Django < 2.0
-        return urlpattern.regex.pattern
-
-
-def get_regex_pattern(urlpattern):
-    """
-    Get the raw regex out of the urlpattern's RegexPattern or RoutePattern. This is always a regular expression,
-    unlike get_original_route above.
-    """
-    if hasattr(urlpattern, 'pattern'):
-        # Django 2.0
-        return urlpattern.pattern.regex.pattern
-    else:
-        # Django < 2.0
-        return urlpattern.regex.pattern
-
-
-def is_route_pattern(urlpattern):
-    if hasattr(urlpattern, 'pattern'):
-        # Django 2.0
-        from django.urls.resolvers import RoutePattern
-        return isinstance(urlpattern.pattern, RoutePattern)
-    else:
-        # Django < 2.0
-        return False
-
-
-def make_url_resolver(regex, urlpatterns):
-    try:
-        # Django 2.0
-        from django.urls.resolvers import RegexPattern
-        return URLResolver(RegexPattern(regex), urlpatterns)
-
-    except ImportError:
-        # Django < 2.0
-        return URLResolver(regex, urlpatterns)
-
-
-def unicode_repr(instance):
-    # Get the repr of an instance, but ensure it is a unicode string
-    # on both python 3 (already the case) and 2 (not the case).
-    if six.PY2:
-        return repr(instance).decode('utf-8')
-    return repr(instance)
-
-
-def unicode_to_repr(value):
-    # Coerce a unicode string to the correct repr return type, depending on
-    # the Python version. We wrap all our `__repr__` implementations with
-    # this and then use unicode throughout internally.
-    if six.PY2:
-        return value.encode('utf-8')
-    return value
 
 
 def unicode_http_header(value):
@@ -127,12 +27,16 @@ except ImportError:
     postgres_fields = None
 
 
-# coreapi is optional (Note that uritemplate is a dependency of coreapi)
+# coreapi is required for CoreAPI schema generation
 try:
     import coreapi
-    import uritemplate
 except ImportError:
     coreapi = None
+
+# uritemplate is required for OpenAPI and CoreAPI schema generation
+try:
+    import uritemplate
+except ImportError:
     uritemplate = None
 
 
@@ -150,13 +54,6 @@ except ImportError:
     yaml = None
 
 
-# django-crispy-forms is optional
-try:
-    import crispy_forms
-except ImportError:
-    crispy_forms = None
-
-
 # requests is optional
 try:
     import requests
@@ -164,23 +61,12 @@ except ImportError:
     requests = None
 
 
-def is_guardian_installed():
-    """
-    django-guardian is optional and only imported if in INSTALLED_APPS.
-    """
-    if six.PY2:
-        # Guardian 1.5.0, for Django 2.2 is NOT compatible with Python 2.7.
-        # Remove when dropping PY2.
-        return False
-    return 'guardian' in settings.INSTALLED_APPS
-
-
 # PATCH method is not implemented by Django
 if 'patch' not in View.http_method_names:
     View.http_method_names = View.http_method_names + ['patch']
 
 
-# Markdown is optional (version 2.6+ required)
+# Markdown is optional (version 3.0+ required)
 try:
     import markdown
 
@@ -210,8 +96,8 @@ except ImportError:
 
 try:
     import pygments
-    from pygments.lexers import get_lexer_by_name, TextLexer
     from pygments.formatters import HtmlFormatter
+    from pygments.lexers import TextLexer, get_lexer_by_name
 
     def pygments_highlight(text, lang, style):
         lexer = get_lexer_by_name(lang, stripall=False)
@@ -235,8 +121,9 @@ if markdown is not None and pygments is not None:
     # starting from this blogpost and modified to support current markdown extensions API
     # https://zerokspot.com/weblog/2008/06/18/syntax-highlighting-in-markdown-with-pygments/
 
-    from markdown.preprocessors import Preprocessor
     import re
+
+    from markdown.preprocessors import Preprocessor
 
     class CodeBlockPreprocessor(Preprocessor):
         pattern = re.compile(
@@ -258,63 +145,15 @@ if markdown is not None and pygments is not None:
             return ret.split("\n")
 
     def md_filter_add_syntax_highlight(md):
-        md.preprocessors.add('highlight', CodeBlockPreprocessor(), "_begin")
+        md.preprocessors.register(CodeBlockPreprocessor(), 'highlight', 40)
         return True
 else:
     def md_filter_add_syntax_highlight(md):
         return False
 
 
-# Django 1.x url routing syntax. Remove when dropping Django 1.11 support.
-try:
-    from django.urls import include, path, re_path, register_converter  # noqa
-except ImportError:
-    from django.conf.urls import include, url # noqa
-    path = None
-    register_converter = None
-    re_path = url
-
-
 # `separators` argument to `json.dumps()` differs between 2.x and 3.x
 # See: https://bugs.python.org/issue22767
-if six.PY3:
-    SHORT_SEPARATORS = (',', ':')
-    LONG_SEPARATORS = (', ', ': ')
-    INDENT_SEPARATORS = (',', ': ')
-else:
-    SHORT_SEPARATORS = (b',', b':')
-    LONG_SEPARATORS = (b', ', b': ')
-    INDENT_SEPARATORS = (b',', b': ')
-
-
-class CustomValidatorMessage(object):
-    """
-    We need to avoid evaluation of `lazy` translated `message` in `django.core.validators.BaseValidator.__init__`.
-    https://github.com/django/django/blob/75ed5900321d170debef4ac452b8b3cf8a1c2384/django/core/validators.py#L297
-
-    Ref: https://github.com/encode/django-rest-framework/pull/5452
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.message = kwargs.pop('message', self.message)
-        super(CustomValidatorMessage, self).__init__(*args, **kwargs)
-
-
-class MinValueValidator(CustomValidatorMessage, validators.MinValueValidator):
-    pass
-
-
-class MaxValueValidator(CustomValidatorMessage, validators.MaxValueValidator):
-    pass
-
-
-class MinLengthValidator(CustomValidatorMessage, validators.MinLengthValidator):
-    pass
-
-
-class MaxLengthValidator(CustomValidatorMessage, validators.MaxLengthValidator):
-    pass
-
-
-# Version Constants.
-PY36 = sys.version_info >= (3, 6)
+SHORT_SEPARATORS = (',', ':')
+LONG_SEPARATORS = (', ', ': ')
+INDENT_SEPARATORS = (',', ': ')

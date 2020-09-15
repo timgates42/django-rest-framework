@@ -16,7 +16,7 @@ NUMERIC_FIELD_TYPES = (
 )
 
 
-class ClassLookupDict(object):
+class ClassLookupDict:
     """
     Takes a dictionary with classes as keys.
     Lookups against this object will traverses the object's inheritance
@@ -58,7 +58,6 @@ def get_detail_view_name(model):
     that refer to instances of the model.
     """
     return '%(model_name)s-detail' % {
-        'app_label': model._meta.app_label,
         'model_name': model._meta.object_name.lower()
     }
 
@@ -91,7 +90,9 @@ def get_field_kwargs(field_name, model_field):
     if isinstance(model_field, models.SlugField):
         kwargs['allow_unicode'] = model_field.allow_unicode
 
-    if isinstance(model_field, models.TextField) or (postgres_fields and isinstance(model_field, postgres_fields.JSONField)):
+    if isinstance(model_field, models.TextField) and not model_field.choices or \
+            (postgres_fields and isinstance(model_field, postgres_fields.JSONField)) or \
+            (hasattr(models, 'JSONField') and isinstance(model_field, models.JSONField)):
         kwargs['style'] = {'base_template': 'textarea.html'}
 
     if isinstance(model_field, models.AutoField) or not model_field.editable:
@@ -103,11 +104,14 @@ def get_field_kwargs(field_name, model_field):
     if model_field.has_default() or model_field.blank or model_field.null:
         kwargs['required'] = False
 
-    if model_field.null and not isinstance(model_field, models.NullBooleanField):
+    if model_field.null:
         kwargs['allow_null'] = True
 
     if model_field.blank and (isinstance(model_field, (models.CharField, models.TextField))):
         kwargs['allow_blank'] = True
+
+    if not model_field.blank and (postgres_fields and isinstance(model_field, postgres_fields.ArrayField)):
+        kwargs['allow_empty'] = False
 
     if isinstance(model_field, models.FilePathField):
         kwargs['path'] = model_field.path

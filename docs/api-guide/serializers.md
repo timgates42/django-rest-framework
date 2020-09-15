@@ -1,4 +1,7 @@
-source: serializers.py
+---
+source:
+    - serializers.py
+---
 
 # Serializers
 
@@ -18,7 +21,7 @@ Let's start by creating a simple object we can use for example purposes:
 
     from datetime import datetime
 
-    class Comment(object):
+    class Comment:
         def __init__(self, email, content, created=None):
             self.email = email
             self.content = content
@@ -235,10 +238,12 @@ Serializer classes can also include reusable validators that are applied to the 
 
         class Meta:
             # Each room only has one event per day.
-            validators = UniqueTogetherValidator(
-                queryset=Event.objects.all(),
-                fields=['room_number', 'date']
-            )
+            validators = [
+                UniqueTogetherValidator(
+                    queryset=Event.objects.all(),
+                    fields=['room_number', 'date']
+                )
+            ]
 
 For more information see the [validators documentation](validators.md).
 
@@ -308,7 +313,7 @@ The following example demonstrates how you might handle creating a user with a n
 
         class Meta:
             model = User
-            fields = ('username', 'email', 'profile')
+            fields = ['username', 'email', 'profile']
 
         def create(self, validated_data):
             profile_data = validated_data.pop('profile')
@@ -330,7 +335,7 @@ Here's an example for an `.update()` method on our previous `UserSerializer` cla
         def update(self, instance, validated_data):
             profile_data = validated_data.pop('profile')
             # Unless the application properly enforces that this field is
-            # always set, the follow could raise a `DoesNotExist`, which
+            # always set, the following could raise a `DoesNotExist`, which
             # would need to be handled.
             profile = instance.profile
 
@@ -379,8 +384,8 @@ This manager class now more nicely encapsulates that user instances and profile 
     def create(self, validated_data):
         return User.objects.create(
             username=validated_data['username'],
-            email=validated_data['email']
-            is_premium_member=validated_data['profile']['is_premium_member']
+            email=validated_data['email'],
+            is_premium_member=validated_data['profile']['is_premium_member'],
             has_support_contract=validated_data['profile']['has_support_contract']
         )
 
@@ -438,7 +443,7 @@ Declaring a `ModelSerializer` looks like this:
     class AccountSerializer(serializers.ModelSerializer):
         class Meta:
             model = Account
-            fields = ('id', 'account_name', 'users', 'created')
+            fields = ['id', 'account_name', 'users', 'created']
 
 By default, all the model fields on the class will be mapped to a corresponding serializer fields.
 
@@ -467,7 +472,7 @@ For example:
     class AccountSerializer(serializers.ModelSerializer):
         class Meta:
             model = Account
-            fields = ('id', 'account_name', 'users', 'created')
+            fields = ['id', 'account_name', 'users', 'created']
 
 You can also set the `fields` attribute to the special value `'__all__'` to indicate that all fields in the model should be used.
 
@@ -485,7 +490,7 @@ For example:
     class AccountSerializer(serializers.ModelSerializer):
         class Meta:
             model = Account
-            exclude = ('users',)
+            exclude = ['users']
 
 In the example above, if the `Account` model had 3 fields `account_name`, `users`, and `created`, this will result in the fields `account_name` and `created` to be serialized.
 
@@ -502,7 +507,7 @@ The default `ModelSerializer` uses primary keys for relationships, but you can a
     class AccountSerializer(serializers.ModelSerializer):
         class Meta:
             model = Account
-            fields = ('id', 'account_name', 'users', 'created')
+            fields = ['id', 'account_name', 'users', 'created']
             depth = 1
 
 The `depth` option should be set to an integer value that indicates the depth of relationships that should be traversed before reverting to a flat representation.
@@ -531,8 +536,8 @@ This option should be a list or tuple of field names, and is declared as follows
     class AccountSerializer(serializers.ModelSerializer):
         class Meta:
             model = Account
-            fields = ('id', 'account_name', 'users', 'created')
-            read_only_fields = ('account_name',)
+            fields = ['id', 'account_name', 'users', 'created']
+            read_only_fields = ['account_name']
 
 Model fields which have `editable=False` set, and `AutoField` fields will be set to read-only by default, and do not need to be added to the `read_only_fields` option.
 
@@ -560,7 +565,7 @@ This option is a dictionary, mapping field names to a dictionary of keyword argu
     class CreateUserSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
-            fields = ('email', 'username', 'password')
+            fields = ['email', 'username', 'password']
             extra_kwargs = {'password': {'write_only': True}}
 
         def create(self, validated_data):
@@ -571,6 +576,8 @@ This option is a dictionary, mapping field names to a dictionary of keyword argu
             user.set_password(validated_data['password'])
             user.save()
             return user
+
+Please keep in mind that, if the field has already been explicitly declared on the serializer class, then the `extra_kwargs` option will be ignored.
 
 ## Relational fields
 
@@ -588,7 +595,7 @@ Normally if a `ModelSerializer` does not generate the fields you need by default
 
 ### `.serializer_field_mapping`
 
-A mapping of Django model classes to REST framework serializer classes. You can override this mapping to alter the default serializer classes that should be used for each model class.
+A mapping of Django model fields to REST framework serializer fields. You can override this mapping to alter the default serializer fields that should be used for each model field.
 
 ### `.serializer_related_field`
 
@@ -624,7 +631,7 @@ The default implementation returns a serializer class based on the `serializer_f
 
 Called to generate a serializer field that maps to a relational model field.
 
-The default implementation returns a serializer class based on the `serializer_relational_field` attribute.
+The default implementation returns a serializer class based on the `serializer_related_field` attribute.
 
 The `relation_info` argument is a named tuple, that contains `model_field`, `related_model`, `to_many` and `has_through_model` properties.
 
@@ -668,7 +675,7 @@ You can explicitly include the primary key by adding it to the `fields` option, 
     class AccountSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = Account
-            fields = ('url', 'id', 'account_name', 'users', 'created')
+            fields = ['url', 'id', 'account_name', 'users', 'created']
 
 ## Absolute and relative URLs
 
@@ -700,7 +707,7 @@ You can override a URL field view name and lookup field by using either, or both
     class AccountSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = Account
-            fields = ('account_url', 'account_name', 'users', 'created')
+            fields = ['account_url', 'account_name', 'users', 'created']
             extra_kwargs = {
                 'url': {'view_name': 'accounts', 'lookup_field': 'account_name'},
                 'users': {'lookup_field': 'username'}
@@ -722,7 +729,7 @@ Alternatively you can set the fields on the serializer explicitly. For example:
 
         class Meta:
             model = Account
-            fields = ('url', 'account_name', 'users', 'created')
+            fields = ['url', 'account_name', 'users', 'created']
 
 ---
 
@@ -882,10 +889,10 @@ To implement a read-only serializer using the `BaseSerializer` class, we just ne
 It's simple to create a read-only serializer for converting `HighScore` instances into primitive data types.
 
     class HighScoreSerializer(serializers.BaseSerializer):
-        def to_representation(self, obj):
+        def to_representation(self, instance):
             return {
-                'score': obj.score,
-                'player_name': obj.player_name
+                'score': instance.score,
+                'player_name': instance.player_name
             }
 
 We can now use this class to serialize single `HighScore` instances:
@@ -940,10 +947,10 @@ Here's a complete example of our previous `HighScoreSerializer`, that's been upd
                 'player_name': player_name
             }
 
-        def to_representation(self, obj):
+        def to_representation(self, instance):
             return {
-                'score': obj.score,
-                'player_name': obj.player_name
+                'score': instance.score,
+                'player_name': instance.player_name
             }
 
         def create(self, validated_data):
@@ -960,10 +967,11 @@ The following class is an example of a generic serializer that can handle coerci
         A read-only serializer that coerces arbitrary complex objects
         into primitive representations.
         """
-        def to_representation(self, obj):
-            for attribute_name in dir(obj):
-                attribute = getattr(obj, attribute_name)
-                if attribute_name('_'):
+        def to_representation(self, instance):
+            output = {}
+            for attribute_name in dir(instance):
+                attribute = getattr(instance, attribute_name)
+                if attribute_name.startswith('_'):
                     # Ignore private attributes.
                     pass
                 elif hasattr(attribute, '__call__'):
@@ -986,6 +994,7 @@ The following class is an example of a generic serializer that can handle coerci
                 else:
                     # Force anything else to its string representation.
                     output[attribute_name] = str(attribute)
+            return output
 
 ---
 
@@ -1003,11 +1012,11 @@ Some reasons this might be useful include...
 
 The signatures for these methods are as follows:
 
-#### `.to_representation(self, obj)`
+#### `.to_representation(self, instance)`
 
 Takes the object instance that requires serialization, and should return a primitive representation. Typically this means returning a structure of built-in Python datatypes. The exact types that can be handled will depend on the render classes you have configured for your API.
 
-May be overridden in order modify the representation style. For example:
+May be overridden in order to modify the representation style. For example:
 
     def to_representation(self, instance):
         """Convert `username` to lowercase."""
@@ -1092,7 +1101,7 @@ This would then allow you to do the following:
     >>> class UserSerializer(DynamicFieldsModelSerializer):
     >>>     class Meta:
     >>>         model = User
-    >>>         fields = ('id', 'username', 'email')
+    >>>         fields = ['id', 'username', 'email']
     >>>
     >>> print(UserSerializer(user))
     {'id': 2, 'username': 'jonwatts', 'email': 'jon@example.com'}
@@ -1169,6 +1178,11 @@ The [html-json-forms][html-json-forms] package provides an algorithm and seriali
 
 The [drf-writable-nested][drf-writable-nested] package provides writable nested model serializer which allows to create/update models with nested related data.
 
+## DRF Encrypt Content
+
+The [drf-encrypt-content][drf-encrypt-content] package helps you encrypt your data, serialized through ModelSerializer. It also contains some helper functions. Which helps you to encrypt your data. 
+
+
 [cite]: https://groups.google.com/d/topic/django-users/sVFaOfQi4wY/discussion
 [relations]: relations.md
 [model-managers]: https://docs.djangoproject.com/en/stable/topics/db/managers/
@@ -1190,3 +1204,4 @@ The [drf-writable-nested][drf-writable-nested] package provides writable nested 
 [drf-serializer-extensions]: https://github.com/evenicoulddoit/django-rest-framework-serializer-extensions
 [djangorestframework-queryfields]: https://djangorestframework-queryfields.readthedocs.io/
 [drf-writable-nested]: https://github.com/beda-software/drf-writable-nested
+[drf-encrypt-content]: https://github.com/oguzhancelikarslan/drf-encrypt-content

@@ -8,9 +8,9 @@ ______ _____ _____ _____    __
 """
 
 __title__ = 'Django REST framework'
-__version__ = '3.9.2'
+__version__ = '3.11.0'
 __author__ = 'Tom Christie'
-__license__ = 'BSD 2-Clause'
+__license__ = 'BSD 3-Clause'
 __copyright__ = 'Copyright 2011-2019 Encode OSS Ltd'
 
 # Version synonym
@@ -25,9 +25,9 @@ ISO_8601 = 'iso-8601'
 default_app_config = 'rest_framework.apps.RestFrameworkConfig'
 
 
-class RemovedInDRF310Warning(DeprecationWarning):
+class RemovedInDRF313Warning(DeprecationWarning):
     pass
 
 
-class RemovedInDRF311Warning(PendingDeprecationWarning):
+class RemovedInDRF314Warning(PendingDeprecationWarning):
     pass

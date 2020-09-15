@@ -1,9 +1,7 @@
-from __future__ import unicode_literals
-
 import uuid
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class RESTFrameworkModel(models.Model):
@@ -38,6 +36,15 @@ class ManyToManySource(RESTFrameworkModel):
 # ForeignKey
 class ForeignKeyTarget(RESTFrameworkModel):
     name = models.CharField(max_length=100)
+
+    def get_first_source(self):
+        """Used for testing related field against a callable."""
+        return self.sources.all().order_by('pk')[0]
+
+    @property
+    def first_source(self):
+        """Used for testing related field against a property."""
+        return self.sources.all().order_by('pk')[0]
 
 
 class UUIDForeignKeyTarget(RESTFrameworkModel):

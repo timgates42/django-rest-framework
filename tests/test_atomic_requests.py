@@ -1,11 +1,9 @@
-from __future__ import unicode_literals
-
 import unittest
 
-from django.conf.urls import url
 from django.db import connection, connections, transaction
 from django.http import Http404
 from django.test import TestCase, TransactionTestCase, override_settings
+from django.urls import path
 
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -38,7 +36,7 @@ class APIExceptionView(APIView):
 class NonAtomicAPIExceptionView(APIView):
     @transaction.non_atomic_requests
     def dispatch(self, *args, **kwargs):
-        return super(NonAtomicAPIExceptionView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         BasicModel.objects.all()
@@ -46,7 +44,7 @@ class NonAtomicAPIExceptionView(APIView):
 
 
 urlpatterns = (
-    url(r'^$', NonAtomicAPIExceptionView.as_view()),
+    path('', NonAtomicAPIExceptionView.as_view()),
 )
 
 

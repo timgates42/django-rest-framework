@@ -52,7 +52,7 @@ Some reasons you might want to use REST framework:
 * [Authentication policies][authentication] including packages for [OAuth1a][oauth1-section] and [OAuth2][oauth2-section].
 * [Serialization][serializers] that supports both [ORM][modelserializer-section] and [non-ORM][serializer-section] data sources.
 * Customizable all the way down - just use [regular function-based views][functionview-section] if you don't need the [more][generic-views] [powerful][viewsets] [features][routers].
-* [Extensive documentation][index], and [great community support][group].
+* Extensive documentation, and [great community support][group].
 * Used and trusted by internationally recognised companies including [Mozilla][mozilla], [Red Hat][redhat], [Heroku][heroku], and [Eventbrite][eventbrite].
 
 ---
@@ -68,15 +68,14 @@ continued development by **[signing up for a paid plan][funding]**.
 <ul class="premium-promo promo">
     <li><a href="https://getsentry.com/welcome/" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/sentry130.png)">Sentry</a></li>
     <li><a href="https://getstream.io/try-the-api/?utm_source=drf&utm_medium=banner&utm_campaign=drf" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/stream-130.png)">Stream</a></li>
-    <li><a href="https://releasehistory.io" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/release-history.png)">Release History</a></li>
+    <li><a href="https://software.esg-usa.com" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/esg-new-logo.png)">ESG</a></li>
     <li><a href="https://rollbar.com" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/rollbar2.png)">Rollbar</a></li>
-    <li><a href="https://cadre.com" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/cadre.png)">Cadre</a></li>
-    <li><a href="https://hubs.ly/H0f30Lf0" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/kloudless-plus-text.png)">Kloudless</a></li>
-    <li><a href="https://lightsonsoftware.com" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/lightson-dark.png)">Lights On Software</a></li>
+    <li><a href="https://retool.com/?utm_source=djangorest&utm_medium=sponsorship" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/retool-sidebar.png)">Retool</a></li>
+    <li><a href="https://bit.io/jobs?utm_source=DRF&utm_medium=sponsor&utm_campaign=DRF_sponsorship" style="background-image: url(https://fund-rest-framework.s3.amazonaws.com/bitio_logo_gold_background.png)">bit.io</a></li>
 </ul>
 <div style="clear: both; padding-bottom: 20px;"></div>
 
-*Many thanks to all our [wonderful sponsors][sponsors], and in particular to our premium backers, [Sentry](https://getsentry.com/welcome/), [Stream](https://getstream.io/?utm_source=drf&utm_medium=banner&utm_campaign=drf), [Release History](https://releasehistory.io), [Rollbar](https://rollbar.com), [Cadre](https://cadre.com), [Kloudless](https://hubs.ly/H0f30Lf0), and [Lights On Software](https://lightsonsoftware.com).*
+*Many thanks to all our [wonderful sponsors][sponsors], and in particular to our premium backers, [Sentry](https://getsentry.com/welcome/), [Stream](https://getstream.io/?utm_source=drf&utm_medium=banner&utm_campaign=drf), [ESG](https://software.esg-usa.com/), [Rollbar](https://rollbar.com/?utm_source=django&utm_medium=sponsorship&utm_campaign=freetrial), [Cadre](https://cadre.com), [Kloudless](https://hubs.ly/H0f30Lf0), [Lights On Software](https://lightsonsoftware.com), [Retool](https://retool.com/?utm_source=djangorest&utm_medium=sponsorship), and [bit.io](https://bit.io/jobs?utm_source=DRF&utm_medium=sponsor&utm_campaign=DRF_sponsorship).*
 
 ---
 
@@ -84,18 +83,18 @@ continued development by **[signing up for a paid plan][funding]**.
 
 REST framework requires the following:
 
-* Python (2.7, 3.4, 3.5, 3.6, 3.7)
-* Django (1.11, 2.0, 2.1, 2.2)
+* Python (3.5, 3.6, 3.7, 3.8, 3.9)
+* Django (2.2, 3.0, 3.1)
 
 We **highly recommend** and only officially support the latest patch release of
 each Python and Django series.
 
 The following packages are optional:
 
-* [coreapi][coreapi] (1.32.0+) - Schema generation support.
-* [Markdown][markdown] (2.6.0+) - Markdown support for the browsable API.
+* [PyYAML][pyyaml], [uritemplate][uriteemplate] (5.1+, 3.0.0+) - Schema generation support.
+* [Markdown][markdown] (3.0.0+) - Markdown support for the browsable API.
+* [Pygments][pygments] (2.4.0+) - Add syntax highlighting to Markdown processing.
 * [django-filter][django-filter] (1.0.1+) - Filtering support.
-* [django-crispy-forms][django-crispy-forms] - Improved HTML display for filtering.
 * [django-guardian][django-guardian] (1.1.1+) - Object level permissions support.
 
 ## Installation
@@ -112,16 +111,16 @@ Install using `pip`, including any optional packages you want...
 
 Add `'rest_framework'` to your `INSTALLED_APPS` setting.
 
-    INSTALLED_APPS = (
+    INSTALLED_APPS = [
         ...
         'rest_framework',
-    )
+    ]
 
 If you're intending to use the browsable API you'll probably also want to add REST framework's login and logout views.  Add the following to your root `urls.py` file.
 
     urlpatterns = [
         ...
-        url(r'^api-auth/', include('rest_framework.urls'))
+        path('api-auth/', include('rest_framework.urls'))
     ]
 
 Note that the URL path can be whatever you want.
@@ -147,7 +146,7 @@ Don't forget to make sure you've also added `rest_framework` to your `INSTALLED_
 We're ready to create our API now.
 Here's our project's root `urls.py` module:
 
-    from django.conf.urls import url, include
+    from django.urls import path, include
     from django.contrib.auth.models import User
     from rest_framework import routers, serializers, viewsets
 
@@ -155,7 +154,7 @@ Here's our project's root `urls.py` module:
     class UserSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = User
-            fields = ('url', 'username', 'email', 'is_staff')
+            fields = ['url', 'username', 'email', 'is_staff']
 
     # ViewSets define the view behavior.
     class UserViewSet(viewsets.ModelViewSet):
@@ -169,8 +168,8 @@ Here's our project's root `urls.py` module:
     # Wire up our API using automatic URL routing.
     # Additionally, we include login URLs for the browsable API.
     urlpatterns = [
-        url(r'^', include(router.urls)),
-        url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+        path('', include(router.urls)),
+        path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
     ]
 
 You can now open the API in your browser at [http://127.0.0.1:8000/](http://127.0.0.1:8000/), and view your new 'users' API. If you use the login control in the top right corner you'll also be able to add, create and delete users from the system.
@@ -236,10 +235,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 [redhat]: https://www.redhat.com/
 [heroku]: https://www.heroku.com/
 [eventbrite]: https://www.eventbrite.co.uk/about/
-[coreapi]: https://pypi.org/project/coreapi/
+[pyyaml]: https://pypi.org/project/PyYAML/
+[uriteemplate]: https://pypi.org/project/uritemplate/
 [markdown]: https://pypi.org/project/Markdown/
+[pygments]: https://pypi.org/project/Pygments/
 [django-filter]: https://pypi.org/project/django-filter/
-[django-crispy-forms]: https://github.com/maraujop/django-crispy-forms
 [django-guardian]: https://github.com/django-guardian/django-guardian
 [index]: .
 [oauth1-section]: api-guide/authentication/#django-rest-framework-oauth

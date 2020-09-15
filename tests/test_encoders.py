@@ -8,9 +8,10 @@ from django.utils.timezone import utc
 
 from rest_framework.compat import coreapi
 from rest_framework.utils.encoders import JSONEncoder
+from rest_framework.utils.serializer_helpers import ReturnList
 
 
-class MockList(object):
+class MockList:
     def tolist(self):
         return [1, 2, 3]
 
@@ -93,3 +94,10 @@ class JSONEncoderTests(TestCase):
         """
         foo = MockList()
         assert self.encoder.default(foo) == [1, 2, 3]
+
+    def test_encode_empty_returnlist(self):
+        """
+        Tests encoding an empty ReturnList
+        """
+        foo = ReturnList(serializer=None)
+        assert self.encoder.default(foo) == []

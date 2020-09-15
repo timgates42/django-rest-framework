@@ -10,11 +10,11 @@ Create a new Django project named `tutorial`, then start a new app called `quick
     mkdir tutorial
     cd tutorial
 
-    # Create a virtualenv to isolate our package dependencies locally
-    virtualenv env
+    # Create a virtual environment to isolate our package dependencies locally
+    python3 -m venv env
     source env/bin/activate  # On Windows use `env\Scripts\activate`
 
-    # Install Django and Django REST framework into the virtualenv
+    # Install Django and Django REST framework into the virtual environment
     pip install django
     pip install djangorestframework
 
@@ -69,13 +69,13 @@ First up we're going to define some serializers. Let's create a new module named
     class UserSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = User
-            fields = ('url', 'username', 'email', 'groups')
+            fields = ['url', 'username', 'email', 'groups']
 
 
     class GroupSerializer(serializers.HyperlinkedModelSerializer):
         class Meta:
             model = Group
-            fields = ('url', 'name')
+            fields = ['url', 'name']
 
 Notice that we're using hyperlinked relations in this case with `HyperlinkedModelSerializer`.  You can also use primary key and various other relationships, but hyperlinking is good RESTful design.
 
@@ -85,6 +85,7 @@ Right, we'd better write some views then.  Open `tutorial/quickstart/views.py` a
 
     from django.contrib.auth.models import User, Group
     from rest_framework import viewsets
+    from rest_framework import permissions
     from tutorial.quickstart.serializers import UserSerializer, GroupSerializer
 
 
@@ -94,6 +95,7 @@ Right, we'd better write some views then.  Open `tutorial/quickstart/views.py` a
         """
         queryset = User.objects.all().order_by('-date_joined')
         serializer_class = UserSerializer
+        permission_classes = [permissions.IsAuthenticated]
 
 
     class GroupViewSet(viewsets.ModelViewSet):
@@ -102,6 +104,7 @@ Right, we'd better write some views then.  Open `tutorial/quickstart/views.py` a
         """
         queryset = Group.objects.all()
         serializer_class = GroupSerializer
+        permission_classes = [permissions.IsAuthenticated]
 
 Rather than write multiple views we're grouping together all the common behavior into classes called `ViewSets`.
 
@@ -134,20 +137,20 @@ Finally, we're including default login and logout views for use with the browsab
 
 ## Pagination
 Pagination allows you to control how many objects per page are returned. To enable it add the following lines to `tutorial/settings.py`
-    
+
     REST_FRAMEWORK = {
         'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
         'PAGE_SIZE': 10
     }
-    
+
 ## Settings
 
 Add `'rest_framework'` to `INSTALLED_APPS`. The settings module will be in `tutorial/settings.py`
 
-    INSTALLED_APPS = (
+    INSTALLED_APPS = [
         ...
         'rest_framework',
-    )
+    ]
 
 Okay, we're done.
 
@@ -175,7 +178,7 @@ We can now access our API, both from the command-line, using tools like `curl`..
             },
             {
                 "email": "tom@example.com",
-                "groups": [                ],
+                "groups": [],
                 "url": "http://127.0.0.1:8000/users/2/",
                 "username": "tom"
             }
@@ -201,7 +204,7 @@ Or using the [httpie][httpie], command line tool...
             },
             {
                 "email": "tom@example.com",
-                "groups": [                ],
+                "groups": [],
                 "url": "http://127.0.0.1:8000/users/2/",
                 "username": "tom"
             }
@@ -221,5 +224,5 @@ If you want to get a more in depth understanding of how REST framework fits toge
 
 [image]: ../img/quickstart.png
 [tutorial]: 1-serialization.md
-[guide]: ../#api-guide
+[guide]: ../api-guide/requests.md
 [httpie]: https://github.com/jakubroztocil/httpie#installation

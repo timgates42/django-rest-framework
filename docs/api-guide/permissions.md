@@ -1,4 +1,7 @@
-source: permissions.py
+---
+source:
+    - permissions.py
+---
 
 # Permissions
 
@@ -72,16 +75,16 @@ Often when you're using object level permissions you'll also want to [filter the
 The default permission policy may be set globally, using the `DEFAULT_PERMISSION_CLASSES` setting.  For example.
 
     REST_FRAMEWORK = {
-        'DEFAULT_PERMISSION_CLASSES': (
+        'DEFAULT_PERMISSION_CLASSES': [
             'rest_framework.permissions.IsAuthenticated',
-        )
+        ]
     }
 
 If not specified, this setting defaults to allowing unrestricted access:
 
-    'DEFAULT_PERMISSION_CLASSES': (
+    'DEFAULT_PERMISSION_CLASSES': [
        'rest_framework.permissions.AllowAny',
-    )
+    ]
 
 You can also set the authentication policy on a per-view, or per-viewset basis,
 using the `APIView` class-based views.
@@ -91,7 +94,7 @@ using the `APIView` class-based views.
     from rest_framework.views import APIView
 
     class ExampleView(APIView):
-        permission_classes = (IsAuthenticated,)
+        permission_classes = [IsAuthenticated]
 
         def get(self, request, format=None):
             content = {
@@ -106,7 +109,7 @@ Or, if you're using the `@api_view` decorator with function based views.
     from rest_framework.response import Response
 
     @api_view(['GET'])
-    @permission_classes((IsAuthenticated, ))
+    @permission_classes([IsAuthenticated])
     def example_view(request, format=None):
         content = {
             'status': 'request was permitted'
@@ -126,7 +129,7 @@ Provided they inherit from `rest_framework.permissions.BasePermission`, permissi
             return request.method in SAFE_METHODS
 
     class ExampleView(APIView):
-        permission_classes = (IsAuthenticated|ReadOnly,)
+        permission_classes = [IsAuthenticated|ReadOnly]
 
         def get(self, request, format=None):
             content = {
@@ -228,7 +231,7 @@ If you need to test if a request is a read operation or a write operation, you s
 
 ---
 
-Custom permissions will raise a `PermissionDenied` exception if the test fails. To change the error message associated with the exception, implement a `message` attribute directly on your custom permission. Otherwise the `default_detail` attribute from `PermissionDenied` will be used.
+Custom permissions will raise a `PermissionDenied` exception if the test fails. To change the error message associated with the exception, implement a `message` attribute directly on your custom permission. Otherwise the `default_detail` attribute from `PermissionDenied` will be used. Similarly, to change the code identifier associated with the exception, implement a `code` attribute directly on your custom permission - otherwise the `default_code` attribute from `PermissionDenied` will be used.
 
     from rest_framework import permissions
 
@@ -240,19 +243,19 @@ Custom permissions will raise a `PermissionDenied` exception if the test fails. 
 
 ## Examples
 
-The following is an example of a permission class that checks the incoming request's IP address against a blacklist, and denies the request if the IP has been blacklisted.
+The following is an example of a permission class that checks the incoming request's IP address against a blocklist, and denies the request if the IP has been blocked.
 
     from rest_framework import permissions
 
-    class BlacklistPermission(permissions.BasePermission):
+    class BlocklistPermission(permissions.BasePermission):
         """
-        Global permission check for blacklisted IPs.
+        Global permission check for blocked IPs.
         """
 
         def has_permission(self, request, view):
             ip_addr = request.META['REMOTE_ADDR']
-            blacklisted = Blacklist.objects.filter(ip_addr=ip_addr).exists()
-            return not blacklisted
+            blocked = Blocklist.objects.filter(ip_addr=ip_addr).exists()
+            return not blocked
 
 As well as global permissions, that are run against all incoming requests, you can also create object-level permissions, that are only run against operations that affect a particular object instance.  For example:
 
@@ -281,6 +284,10 @@ Also note that the generic views will only check the object-level permissions fo
 
 The following third party packages are also available.
 
+## DRF - Access Policy
+
+The [Django REST - Access Policy][drf-access-policy] package provides a way to define complex access rules in declarative policy classes that are attached to view sets or function-based views. The policies are defined in JSON in a format similar to AWS' Identity & Access Management policies. 
+
 ## Composed Permissions
 
 The [Composed Permissions][composed-permissions] package provides a simple way to define complex and multi-depth (with logic operators) permission objects, using small and reusable components.
@@ -299,11 +306,16 @@ The [Django Rest Framework Roles][django-rest-framework-roles] package makes it 
 
 ## Django REST Framework API Key
 
-The [Django REST Framework API Key][djangorestframework-api-key] package provides the ability to authorize clients based on customizable API key headers. This package is targeted at situations in which regular user-based authentication (e.g. `TokenAuthentication`) is not suitable, e.g. allowing non-human clients to safely use your API. API keys are generated and validated through cryptographic methods and can be created and revoked from the Django admin interface at anytime.
+The [Django REST Framework API Key][djangorestframework-api-key] package provides permissions classes, models and helpers to add API key authorization to your API. It can be used to authorize internal or third-party backends and services (i.e. _machines_) which do not have a user account. API keys are stored securely using Django's password hashing infrastructure, and they can be viewed, edited and revoked at anytime in the Django admin.
 
 ## Django Rest Framework Role Filters
 
 The [Django Rest Framework Role Filters][django-rest-framework-role-filters] package provides simple filtering over multiple types of roles.
+
+## Django Rest Framework PSQ
+
+The [Django Rest Framework PSQ][drf-psq] package is an extension that gives support for having action-based **permission_classes**, **serializer_class**, and **queryset** dependent on permission-based rules.
+
 
 [cite]: https://developer.apple.com/library/mac/#documentation/security/Conceptual/AuthenticationAndAuthorizationGuide/Authorization/Authorization.html
 [authentication]: authentication.md
@@ -315,8 +327,10 @@ The [Django Rest Framework Role Filters][django-rest-framework-role-filters] pac
 [filtering]: filtering.md
 [composed-permissions]: https://github.com/niwibe/djangorestframework-composed-permissions
 [rest-condition]: https://github.com/caxap/rest_condition
-[dry-rest-permissions]: https://github.com/Helioscene/dry-rest-permissions
+[dry-rest-permissions]: https://github.com/FJNR-inc/dry-rest-permissions
 [django-rest-framework-roles]: https://github.com/computer-lab/django-rest-framework-roles
-[djangorestframework-api-key]: https://github.com/florimondmanca/djangorestframework-api-key
+[djangorestframework-api-key]: https://florimondmanca.github.io/djangorestframework-api-key/
 [django-rest-framework-role-filters]: https://github.com/allisson/django-rest-framework-role-filters
 [django-rest-framework-guardian]: https://github.com/rpkilby/django-rest-framework-guardian
+[drf-access-policy]: https://github.com/rsinger86/drf-access-policy
+[drf-psq]: https://github.com/drf-psq/drf-psq
